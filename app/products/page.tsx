@@ -1,5 +1,6 @@
 // app/products/page.tsx
 import Link from "next/link";
+import { headers } from "next/headers";
 
 type Product = {
   id: number;
@@ -9,9 +10,13 @@ type Product = {
 };
 
 export default async function ProductsPage() {
-  const res = await fetch("http://localhost:3000/api/products", {
-    cache: "no-store",
-  });
+  // ポートが3000/3001に変わっても動くようにする
+  const h = await headers();
+  const host = h.get("host") ?? "localhost:3000";
+  const proto = process.env.NODE_ENV === "development" ? "http" : "https";
+  const baseUrl = `${proto}://${host}`;
+
+  const res = await fetch(`${baseUrl}/api/products`, { cache: "no-store" });
 
   if (!res.ok) {
     return (

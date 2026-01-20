@@ -1,5 +1,6 @@
-import LotClient from "./LotClient";
+// app/products/[id]/page.tsx
 import { headers } from "next/headers";
+import LotClient from "./LotClient";
 
 type Lot = {
   id: number;
@@ -7,20 +8,18 @@ type Lot = {
   exp: string;
   qty_back: number;
   qty_display: number;
-  created_at: string;
 };
 
 export default async function ProductDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const { id } = params;
+  const { id } = await params;
 
-  // 現在アクセスしている host/port を自動で拾う（3000でも3001でもOK）
   const h = await headers();
-  const host = h.get("host"); // 例: localhost:3001
-  const proto = h.get("x-forwarded-proto") ?? "http";
+  const host = h.get("host") ?? "localhost:3000";
+  const proto = process.env.NODE_ENV === "development" ? "http" : "https";
   const baseUrl = `${proto}://${host}`;
 
   const res = await fetch(`${baseUrl}/api/products/${id}/lots`, {
@@ -28,19 +27,23 @@ export default async function ProductDetailPage({
   });
 
   if (!res.ok) {
+    const text = await res.text();
     return (
       <div style={{ padding: 16 }}>
-        <h1>Product {id}</h1>
+        <h1>Product</h1>
         <p>Failed to load lots: {res.status}</p>
+        <pre style={{ whiteSpace: "pre-wrap" }}>{text}</pre>
       </div>
     );
   }
 
-  const lots: Lot[] = await res.json();
+  // ★ここが重要：APIは { ok, lots } なので data で受ける
+  const data = await res.json();
+  const lots: Lot[] = Array.isArray(data) ? data : (data.lots ?? []);
 
   return (
     <div style={{ padding: 16 }}>
-      <h1 style={{ fontSize: 24, fontWeight: 700 }}>Product {id}</h1>
+      <h1 style={{ fontSize: 24, fontWeight: 700 }}>Product</h1>
       <LotClient productId={id} initialLots={lots} />
     </div>
   );
