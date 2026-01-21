@@ -66,7 +66,6 @@ async function getProducts(): Promise<ProductsResult> {
     };
   }
 }
-
 export default async function ProductsPage() {
   const result = await getProducts();
 

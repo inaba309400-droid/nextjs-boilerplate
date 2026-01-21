@@ -26,8 +26,16 @@ export default function LotClient({
   const [qtyBack, setQtyBack] = useState<number>(0);
   const [qtyDisplay, setQtyDisplay] = useState<number>(0);
 
-  const lots = useMemo(() => initialLots ?? [], [initialLots]);
+const lots = useMemo<Lot[]>(() => {
+  // 正常系：配列
+  if (Array.isArray(initialLots)) return initialLots;
 
+  // 異常系：{ ok:true, lots:[...] } が渡ってきた場合も救済
+  const maybe = initialLots as any;
+  if (maybe && Array.isArray(maybe.lots)) return maybe.lots;
+
+  return [];
+}, [initialLots]);
   async function upsertLot(next: { exp: string; qty_back: number; qty_display: number }) {
     try {
       setSaving(true);
